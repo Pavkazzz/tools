@@ -4,148 +4,349 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Кредитный калькулятор</title>
-    <meta name="description" content="Расчёт займа: аннуитетные платежи и возврат в конце срока для разных процентных ставок">
+    <meta name="description" content="Расчёт займа между друзьями: аннуитетные платежи, график, расписка">
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --surface2: #334155;
+            --border: #475569;
+            --text: #e2e8f0;
+            --text2: #94a3b8;
+            --accent: #3b82f6;
+            --accent2: #60a5fa;
+            --accent-glow: rgba(59, 130, 246, 0.25);
+            --green: #22c55e;
+            --green-dim: rgba(34, 197, 94, 0.15);
+            --orange: #f59e0b;
+            --radius: 12px;
+        }
+
         body {
             font-family: system-ui, -apple-system, sans-serif;
-            background: #f8f9fa;
-            color: #1a1a1a;
-            line-height: 1.5;
-            padding: 1rem;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
         }
+
+        .hero {
+            text-align: center;
+            padding: 3rem 1rem 2rem;
+            background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 50%, #1a1e3a 100%);
+            border-bottom: 1px solid var(--surface2);
+            position: relative;
+            overflow: hidden;
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 30% 50%, rgba(59,130,246,0.08) 0%, transparent 50%),
+                        radial-gradient(circle at 70% 50%, rgba(139,92,246,0.06) 0%, transparent 50%);
+            animation: drift 20s ease-in-out infinite alternate;
+        }
+        @keyframes drift {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(-5%, 3%); }
+        }
+        .hero h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent2), #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            position: relative;
+            margin-bottom: 0.3rem;
+        }
+        .hero p {
+            color: var(--text2);
+            font-size: 1rem;
+            position: relative;
+        }
+
         .container {
             max-width: 900px;
-            margin: 2rem auto;
+            margin: 0 auto;
+            padding: 2rem 1rem 4rem;
         }
-        h1 {
-            text-align: center;
-            margin-bottom: 0.25rem;
-            color: #2563eb;
+
+        /* Cards */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--surface2);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            transition: border-color 0.2s;
         }
-        .subtitle {
-            text-align: center;
-            color: #666;
-            margin-bottom: 2rem;
+        .card:hover { border-color: var(--border); }
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .card-title .icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-size: 0.95rem;
+            flex-shrink: 0;
         }
+
+        /* Form */
         .form-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 1rem;
-            margin-bottom: 1.5rem;
         }
         .field label {
             display: block;
             font-weight: 600;
-            margin-bottom: 0.25rem;
-            font-size: 0.9rem;
+            font-size: 0.82rem;
+            color: var(--text2);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: 0.35rem;
         }
-        .field input {
+        .field input, .field textarea {
             width: 100%;
-            padding: 0.5rem 0.75rem;
-            border: 1.5px solid #d1d5db;
-            border-radius: 6px;
+            padding: 0.6rem 0.85rem;
+            background: var(--bg);
+            border: 1.5px solid var(--surface2);
+            border-radius: 8px;
+            color: var(--text);
             font-size: 1rem;
-            transition: border-color 0.15s;
+            font-family: inherit;
+            transition: border-color 0.15s, box-shadow 0.15s;
         }
-        .field input:focus {
+        .field input:focus, .field textarea:focus {
             outline: none;
-            border-color: #2563eb;
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
         }
-        .field .hint {
-            font-size: 0.8rem;
-            color: #888;
-            margin-top: 0.2rem;
-        }
-        button {
-            display: block;
-            width: 100%;
-            max-width: 300px;
-            margin: 0 auto 2rem;
-            padding: 0.65rem 1.5rem;
-            background: #2563eb;
+        .field textarea { resize: vertical; min-height: 80px; font-size: 0.92rem; }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.7rem 2rem;
+            background: linear-gradient(135deg, var(--accent), #6366f1);
             color: #fff;
             border: none;
-            border-radius: 6px;
+            border-radius: 8px;
             font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.1s, box-shadow 0.2s;
+            margin-top: 0.5rem;
+        }
+        .btn:hover { transform: translateY(-1px); box-shadow: 0 4px 20px var(--accent-glow); }
+        .btn:active { transform: translateY(0); }
+        .btn-row { text-align: center; margin: 1.5rem 0; }
+
+        /* Stats row */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .stat {
+            background: var(--surface);
+            border: 1px solid var(--surface2);
+            border-radius: var(--radius);
+            padding: 1rem 1.25rem;
+            text-align: center;
+        }
+        .stat .label { font-size: 0.78rem; color: var(--text2); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.25rem; }
+        .stat .value { font-size: 1.55rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+        .stat .value.accent { color: var(--accent2); }
+        .stat .value.green { color: var(--green); }
+        .stat .value.orange { color: var(--orange); }
+
+        /* Tables */
+        .table-wrap { overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--surface2); }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.88rem;
+            font-variant-numeric: tabular-nums;
+        }
+        th {
+            background: var(--surface2);
+            color: var(--text);
+            font-weight: 700;
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            padding: 0.65rem 0.85rem;
+            text-align: right;
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+        }
+        td {
+            padding: 0.55rem 0.85rem;
+            text-align: right;
+            border-bottom: 1px solid var(--surface2);
+            color: var(--text);
+        }
+        th:first-child, td:first-child { text-align: center; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: rgba(59, 130, 246, 0.06); }
+        td.principal { color: var(--accent2); }
+        td.interest { color: var(--orange); }
+        td.balance { color: var(--text2); }
+
+        /* Comparison table */
+        .cmp-table tr.active td { background: var(--green-dim); }
+        .cmp-table td:first-child { text-align: left; font-weight: 600; }
+
+        /* Receipt */
+        .receipt {
+            background: #fffef5;
+            color: #1a1a1a;
+            border: 2px dashed #c9b97a;
+            border-radius: var(--radius);
+            padding: 2rem 2.5rem;
+            font-family: 'Georgia', 'Times New Roman', serif;
+            font-size: 0.95rem;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            position: relative;
+            margin-top: 1rem;
+        }
+        .receipt::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: repeating-linear-gradient(0deg, transparent, transparent 1.78rem, rgba(0,0,0,0.03) 1.78rem, rgba(0,0,0,0.03) 1.8rem);
+            pointer-events: none;
+            border-radius: var(--radius);
+        }
+        .receipt-actions { margin-top: 1rem; display: flex; gap: 0.75rem; flex-wrap: wrap; }
+        .btn-sm {
+            padding: 0.45rem 1.2rem;
+            background: var(--surface2);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.85rem;
             font-weight: 600;
             cursor: pointer;
             transition: background 0.15s;
         }
-        button:hover { background: #1d4ed8; }
-        .results-section h2 {
-            margin: 1.5rem 0 0.75rem;
+        .btn-sm:hover { background: var(--border); }
+
+        /* Section titles */
+        .section-title {
             font-size: 1.15rem;
-            color: #1a1a1a;
+            font-weight: 700;
+            margin: 2rem 0 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--surface2);
         }
-        .table-wrap {
-            overflow-x: auto;
-            margin-bottom: 1rem;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.92rem;
-            background: #fff;
+
+        /* Tabs */
+        .tabs { display: flex; gap: 0.25rem; margin-bottom: 1rem; }
+        .tab {
+            padding: 0.45rem 1rem;
+            background: transparent;
+            border: 1px solid var(--surface2);
             border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-        }
-        th, td {
-            padding: 0.55rem 0.75rem;
-            text-align: right;
-            border-bottom: 1px solid #e5e7eb;
-            white-space: nowrap;
-        }
-        th {
-            background: #2563eb;
-            color: #fff;
+            color: var(--text2);
+            font-size: 0.85rem;
             font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
         }
-        td:first-child, th:first-child { text-align: left; }
-        tr:last-child td { border-bottom: none; }
-        tr:hover td { background: #f0f5ff; }
-        .fmt { font-variant-numeric: tabular-nums; }
+        .tab:hover { border-color: var(--border); color: var(--text); }
+        .tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+        /* Names form */
+        .names-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
         @media (max-width: 600px) {
-            .container { margin: 1rem auto; }
-            th, td { padding: 0.4rem 0.5rem; font-size: 0.82rem; }
+            .hero h1 { font-size: 1.6rem; }
+            .container { padding: 1rem 0.75rem 3rem; }
+            .card { padding: 1rem; }
+            .receipt { padding: 1.25rem 1rem; font-size: 0.85rem; }
+            .stats { grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+            .stat .value { font-size: 1.2rem; }
+            .names-grid { grid-template-columns: 1fr; }
+            th, td { padding: 0.4rem 0.55rem; font-size: 0.8rem; }
         }
     </style>
 </head>
 <body>
-<div class="container">
+
+<div class="hero">
     <h1>Кредитный калькулятор</h1>
     <p class="subtitle">Сравнение ставок: аннуитет и возврат в конце срока</p>
     <p style="text-align:center;margin-bottom:1.5rem"><a href="loan-agreement" style="color:#2563eb;font-size:0.95rem">📝 Создать долговую расписку</a></p>
 
-    <div class="form-grid">
-        <div class="field">
-            <label for="amount">Сумма займа, ₽</label>
-            <input type="number" id="amount" value="700000" min="1000" step="1000">
-        </div>
-        <div class="field">
-            <label for="months">Срок, месяцев</label>
-            <input type="number" id="months" value="12" min="1" max="360">
-        </div>
-        <div class="field">
-            <label for="rateFrom">Ставка от, %</label>
-            <input type="number" id="rateFrom" value="15.5" min="0.1" step="0.1">
-        </div>
-        <div class="field">
-            <label for="rateTo">Ставка до, %</label>
-            <input type="number" id="rateTo" value="1.5" min="0.1" step="0.1">
-        </div>
-        <div class="field">
-            <label for="rateStep">Шаг ставки, %</label>
-            <input type="number" id="rateStep" value="2" min="0.1" step="0.1">
+<div class="container">
+
+    <!-- Input form -->
+    <div class="card">
+        <div class="card-title"><span class="icon" style="background:var(--accent-glow);color:var(--accent2)">$</span> Параметры займа</div>
+        <div class="form-grid">
+            <div class="field">
+                <label for="amount">Сумма займа, ₽</label>
+                <input type="number" id="amount" value="700000" min="1000" step="1000">
+            </div>
+            <div class="field">
+                <label for="months">Срок, месяцев</label>
+                <input type="number" id="months" value="12" min="1" max="360">
+            </div>
+            <div class="field">
+                <label for="rateFrom">Ставка, %</label>
+                <input type="number" id="rateFrom" value="15.5" min="0" step="0.1">
+            </div>
+            <div class="field">
+                <label for="rateTo">Сравнить до, %</label>
+                <input type="number" id="rateTo" value="1.5" min="0" step="0.1">
+            </div>
+            <div class="field">
+                <label for="rateStep">Шаг сравнения, %</label>
+                <input type="number" id="rateStep" value="2" min="0.1" step="0.1">
+            </div>
         </div>
     </div>
 
-    <button onclick="calculate()">Рассчитать</button>
+    <div class="btn-row"><button class="btn" onclick="calculate()">Рассчитать</button></div>
 
-    <div id="results" class="results-section"></div>
+    <!-- Main results -->
+    <div id="mainStats"></div>
+
+    <!-- Payment schedule -->
+    <div id="schedule"></div>
+
+    <!-- Rate comparison -->
+    <div id="comparison"></div>
+
+    <!-- Receipt section -->
+    <div id="receiptSection"></div>
+
 </div>
 
 <script>
@@ -153,82 +354,340 @@ function fmt(n) {
     return Math.round(n).toLocaleString('ru-RU');
 }
 
-function calcSimple(S, annualRate, months) {
-    const interest = Math.round(S * (annualRate / 100) * (months / 12));
-    return { interest, total: S + interest, overpay: interest };
+function fmtDec(n, d) {
+    return n.toLocaleString('ru-RU', { minimumFractionDigits: d, maximumFractionDigits: d });
 }
 
 function calcAnnuity(S, annualRate, n) {
     const r = annualRate / 100 / 12;
     if (r === 0) {
-        const payment = Math.round(S / n);
-        return { payment, total: payment * n, overpay: payment * n - S };
+        const payment = S / n;
+        return { payment, total: S, overpay: 0, r: 0 };
     }
     const pow = Math.pow(1 + r, n);
-    const payment = Math.round(S * (r * pow) / (pow - 1));
+    const payment = S * (r * pow) / (pow - 1);
     const total = payment * n;
-    return { payment, total, overpay: total - S };
+    return { payment, total, overpay: total - S, r };
 }
 
-function buildTable(headers, rows) {
-    let html = '<div class="table-wrap"><table><thead><tr>';
-    headers.forEach(h => html += `<th>${h}</th>`);
-    html += '</tr></thead><tbody>';
-    rows.forEach(row => {
-        html += '<tr>';
-        row.forEach(cell => html += `<td class="fmt">${cell}</td>`);
-        html += '</tr>';
-    });
-    html += '</tbody></table></div>';
-    return html;
+function buildSchedule(S, annualRate, n) {
+    const r = annualRate / 100 / 12;
+    const info = calcAnnuity(S, annualRate, n);
+    const payment = info.payment;
+    const rows = [];
+    let balance = S;
+    let totalInterest = 0;
+    let totalPrincipal = 0;
+
+    for (let i = 1; i <= n; i++) {
+        const interestPart = balance * r;
+        const principalPart = payment - interestPart;
+        balance -= principalPart;
+        if (balance < 0) balance = 0;
+        totalInterest += interestPart;
+        totalPrincipal += principalPart;
+        rows.push({
+            month: i,
+            payment: Math.round(payment),
+            principal: Math.round(principalPart),
+            interest: Math.round(interestPart),
+            totalInterest: Math.round(totalInterest),
+            balance: Math.round(balance)
+        });
+    }
+    return rows;
+}
+
+function padDate(d) { return String(d).padStart(2, '0'); }
+
+function dateAfterMonths(start, months) {
+    const d = new Date(start);
+    d.setMonth(d.getMonth() + months);
+    return d;
+}
+
+function formatDate(d) {
+    return `${padDate(d.getDate())}.${padDate(d.getMonth() + 1)}.${d.getFullYear()}`;
+}
+
+function monthName(m) {
+    return ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'][m];
+}
+
+function formatDateLong(d) {
+    return `${padDate(d.getDate())} ${monthName(d.getMonth())} ${d.getFullYear()} года`;
+}
+
+function numWord(n, one, two, five) {
+    n = Math.abs(n) % 100;
+    const n1 = n % 10;
+    if (n > 10 && n < 20) return five;
+    if (n1 > 1 && n1 < 5) return two;
+    if (n1 === 1) return one;
+    return five;
+}
+
+function amountInWords(n) {
+    // Simplified — just show the number with currency
+    return `${fmt(n)} (${numToWords(n)}) рублей`;
+}
+
+function numToWords(n) {
+    n = Math.round(n);
+    if (n === 0) return 'ноль';
+
+    const ones = ['','один','два','три','четыре','пять','шесть','семь','восемь','девять',
+                  'десять','одиннадцать','двенадцать','тринадцать','четырнадцать','пятнадцать',
+                  'шестнадцать','семнадцать','восемнадцать','девятнадцать'];
+    const tens = ['','','двадцать','тридцать','сорок','пятьдесят','шестьдесят','семьдесят','восемьдесят','девяносто'];
+    const hundreds = ['','сто','двести','триста','четыреста','пятьсот','шестьсот','семьсот','восемьсот','девятьсот'];
+
+    const parts = [];
+
+    if (n >= 1000000) {
+        const m = Math.floor(n / 1000000);
+        const mOnes = m % 10;
+        const mTens = m % 100;
+        let mWord = '';
+        if (m >= 100) mWord += hundreds[Math.floor(m / 100)] + ' ';
+        if (mTens >= 20) { mWord += tens[Math.floor((m % 100) / 10)] + ' '; if (mOnes) mWord += ones[mOnes] + ' '; }
+        else if (mTens >= 1) { mWord += ones[mTens] + ' '; }
+        mWord += numWord(m, 'миллион', 'миллиона', 'миллионов');
+        parts.push(mWord.trim());
+        n %= 1000000;
+    }
+
+    if (n >= 1000) {
+        const t = Math.floor(n / 1000);
+        const tOnes = t % 10;
+        const tTens = t % 100;
+        let tWord = '';
+        if (t >= 100) tWord += hundreds[Math.floor(t / 100)] + ' ';
+        if (tTens >= 20) {
+            tWord += tens[Math.floor((t % 100) / 10)] + ' ';
+            if (tOnes === 1) tWord += 'одна ';
+            else if (tOnes === 2) tWord += 'две ';
+            else if (tOnes) tWord += ones[tOnes] + ' ';
+        } else if (tTens >= 1) {
+            if (tTens === 1) tWord += 'одна ';
+            else if (tTens === 2) tWord += 'две ';
+            else tWord += ones[tTens] + ' ';
+        }
+        tWord += numWord(t, 'тысяча', 'тысячи', 'тысяч');
+        parts.push(tWord.trim());
+        n %= 1000;
+    }
+
+    if (n >= 100) { parts.push(hundreds[Math.floor(n / 100)]); n %= 100; }
+    if (n >= 20) { parts.push(tens[Math.floor(n / 10)]); n %= 10; }
+    if (n >= 1) { parts.push(ones[n]); }
+
+    return parts.join(' ').replace(/\s+/g, ' ').trim();
 }
 
 function calculate() {
     const S = parseFloat(document.getElementById('amount').value);
     const months = parseInt(document.getElementById('months').value);
-    const from = parseFloat(document.getElementById('rateFrom').value);
+    const mainRate = parseFloat(document.getElementById('rateFrom').value);
     const to = parseFloat(document.getElementById('rateTo').value);
     const step = parseFloat(document.getElementById('rateStep').value);
 
-    if (!S || !months || isNaN(from) || isNaN(to) || !step) return;
+    if (!S || !months || isNaN(mainRate) || isNaN(to) || !step) return;
 
+    const main = calcAnnuity(S, mainRate, months);
+    const schedule = buildSchedule(S, mainRate, months);
+    const today = new Date();
+    const endDate = dateAfterMonths(today, months);
+
+    // === Main stats ===
+    let html = `
+    <div class="stats">
+        <div class="stat">
+            <div class="label">Ежемесячный платёж</div>
+            <div class="value accent">${fmt(main.payment)} ₽</div>
+        </div>
+        <div class="stat">
+            <div class="label">Всего выплат</div>
+            <div class="value">${fmt(main.total)} ₽</div>
+        </div>
+        <div class="stat">
+            <div class="label">Переплата</div>
+            <div class="value orange">${fmt(main.overpay)} ₽</div>
+        </div>
+        <div class="stat">
+            <div class="label">Эффективная ставка</div>
+            <div class="value green">${fmtDec(mainRate, 1)}%</div>
+        </div>
+    </div>
+
+    <div class="stats">
+        <div class="stat">
+            <div class="label">Сумма займа</div>
+            <div class="value">${fmt(S)} ₽</div>
+        </div>
+        <div class="stat">
+            <div class="label">Срок</div>
+            <div class="value">${months} ${numWord(months, 'месяц', 'месяца', 'месяцев')}</div>
+        </div>
+        <div class="stat">
+            <div class="label">Дата окончания</div>
+            <div class="value" style="font-size:1.1rem">${formatDate(endDate)}</div>
+        </div>
+        <div class="stat">
+            <div class="label">Переплата, %</div>
+            <div class="value orange">${fmtDec(main.overpay / S * 100, 1)}%</div>
+        </div>
+    </div>`;
+    document.getElementById('mainStats').innerHTML = html;
+
+    // === Schedule ===
+    let schedHtml = `<div class="section-title">График аннуитетных платежей</div>`;
+    schedHtml += `<div class="card"><div class="table-wrap"><table>
+        <thead><tr>
+            <th>№</th><th>Дата</th><th>Платёж</th><th>Основной долг</th><th>Проценты</th><th>Остаток</th>
+        </tr></thead><tbody>`;
+    schedule.forEach(row => {
+        const payDate = dateAfterMonths(today, row.month);
+        schedHtml += `<tr>
+            <td>${row.month}</td>
+            <td>${formatDate(payDate)}</td>
+            <td>${fmt(row.payment)} ₽</td>
+            <td class="principal">${fmt(row.principal)} ₽</td>
+            <td class="interest">${fmt(row.interest)} ₽</td>
+            <td class="balance">${fmt(row.balance)} ₽</td>
+        </tr>`;
+    });
+    const totalPrincipal = schedule.reduce((s, r) => s + r.principal, 0);
+    const totalInterest = schedule.reduce((s, r) => s + r.interest, 0);
+    schedHtml += `<tr style="font-weight:700;border-top:2px solid var(--border)">
+        <td></td><td>Итого</td>
+        <td>${fmt(totalPrincipal + totalInterest)} ₽</td>
+        <td class="principal">${fmt(totalPrincipal)} ₽</td>
+        <td class="interest">${fmt(totalInterest)} ₽</td>
+        <td></td>
+    </tr>`;
+    schedHtml += `</tbody></table></div></div>`;
+    document.getElementById('schedule').innerHTML = schedHtml;
+
+    // === Comparison table ===
     const rates = [];
-    if (from >= to) {
-        for (let r = from; r >= to - 0.001; r -= step) rates.push(Math.round(r * 10) / 10);
+    if (mainRate >= to) {
+        for (let r = mainRate; r >= to - 0.001; r -= step) rates.push(Math.round(r * 10) / 10);
     } else {
-        for (let r = from; r <= to + 0.001; r += step) rates.push(Math.round(r * 10) / 10);
+        for (let r = mainRate; r <= to + 0.001; r += step) rates.push(Math.round(r * 10) / 10);
     }
 
-    const simpleRows = [];
-    const annuityRows = [];
-
+    let cmpHtml = `<div class="section-title">Сравнение ставок</div>`;
+    cmpHtml += `<div class="card"><div class="table-wrap"><table class="cmp-table">
+        <thead><tr><th>Ставка</th><th>Платёж/мес.</th><th>Всего выплат</th><th>Переплата</th><th>Переплата, %</th></tr></thead><tbody>`;
     rates.forEach(rate => {
-        const s = calcSimple(S, rate, months);
-        simpleRows.push([
-            rate.toFixed(1) + '%',
-            fmt(s.interest) + ' ₽',
-            fmt(s.total) + ' ₽',
-            fmt(s.overpay) + ' ₽'
-        ]);
-
         const a = calcAnnuity(S, rate, months);
-        annuityRows.push([
-            rate.toFixed(1) + '%',
-            fmt(a.payment) + ' ₽',
-            fmt(a.total) + ' ₽',
-            fmt(a.overpay) + ' ₽'
-        ]);
+        const isActive = Math.abs(rate - mainRate) < 0.01;
+        cmpHtml += `<tr class="${isActive ? 'active' : ''}">
+            <td>${fmtDec(rate, 1)}%${isActive ? ' ◀' : ''}</td>
+            <td>${fmt(a.payment)} ₽</td>
+            <td>${fmt(a.total)} ₽</td>
+            <td>${fmt(a.overpay)} ₽</td>
+            <td>${fmtDec(a.overpay / S * 100, 1)}%</td>
+        </tr>`;
     });
+    cmpHtml += `</tbody></table></div></div>`;
+    document.getElementById('comparison').innerHTML = cmpHtml;
 
-    let html = `<h2>Возврат всей суммы в конце срока (простой процент)</h2>`;
-    html += `<p style="color:#666;font-size:0.88rem;margin-bottom:0.5rem">Сумма: ${fmt(S)} ₽, срок: ${months} мес.</p>`;
-    html += buildTable(['Ставка', 'Проценты', 'Всего к возврату', 'Переплата'], simpleRows);
+    // === Receipt ===
+    buildReceipt(S, mainRate, months, main, schedule, today, endDate);
+}
 
-    html += `<h2>Ежемесячные аннуитетные платежи</h2>`;
-    html += `<p style="color:#666;font-size:0.88rem;margin-bottom:0.5rem">Сумма: ${fmt(S)} ₽, срок: ${months} мес.</p>`;
-    html += buildTable(['Ставка', 'Платёж/мес.', 'Всего выплат', 'Переплата'], annuityRows);
+function buildReceipt(S, rate, months, info, schedule, today, endDate) {
+    const lenderName = document.getElementById('lenderName')?.value || 'Иванов Иван Иванович';
+    const lenderPassport = document.getElementById('lenderPassport')?.value || 'серия 00 00, номер 000000, выдан ОВД г. Москвы 01.01.2020';
+    const borrowerName = document.getElementById('borrowerName')?.value || 'Петров Пётр Петрович';
+    const borrowerPassport = document.getElementById('borrowerPassport')?.value || 'серия 00 00, номер 000000, выдан ОВД г. Москвы 01.01.2020';
 
-    document.getElementById('results').innerHTML = html;
+    const paymentDates = [];
+    for (let i = 1; i <= months; i++) {
+        const d = dateAfterMonths(today, i);
+        paymentDates.push(`    ${i}. ${formatDate(d)} — ${fmt(schedule[i-1].payment)} ₽ (основной долг ${fmt(schedule[i-1].principal)} ₽ + проценты ${fmt(schedule[i-1].interest)} ₽)`);
+    }
+
+    const receiptText = `РАСПИСКА О ПОЛУЧЕНИИ ДЕНЕЖНЫХ СРЕДСТВ
+
+г. Москва                                              ${formatDateLong(today)}
+
+Я, ${borrowerName}, паспорт ${borrowerPassport}, именуемый(-ая) в дальнейшем «Заёмщик», получил(-а) от ${lenderName}, паспорт ${lenderPassport}, именуемого(-ую) в дальнейшем «Займодавец», денежные средства в размере ${fmt(S)} (${numToWords(S)}) рублей.
+
+Условия займа:
+— Сумма займа: ${fmt(S)} рублей
+— Процентная ставка: ${fmtDec(rate, 1)}% годовых
+— Срок возврата: ${months} ${numWord(months, 'месяц', 'месяца', 'месяцев')}
+— Дата полного возврата: не позднее ${formatDateLong(endDate)}
+— Общая сумма к возврату: ${fmt(Math.round(info.total))} рублей (основной долг + проценты ${fmt(Math.round(info.overpay))} рублей)
+
+Возврат осуществляется ежемесячными аннуитетными платежами по следующему графику:
+
+${paymentDates.join('\n')}
+
+Заёмщик вправе вернуть сумму займа досрочно полностью или частично, уведомив Займодавца не менее чем за 5 дней. При досрочном возврате проценты начисляются за фактический срок пользования денежными средствами.
+
+Денежные средства получены в полном объёме, претензий к Займодавцу не имею.
+
+
+Заёмщик: _________________ / ${borrowerName} /
+
+Займодавец: _________________ / ${lenderName} /`;
+
+    let rHtml = `<div class="section-title">Расписка</div>
+    <div class="card">
+        <div class="card-title"><span class="icon" style="background:rgba(245,158,11,0.15);color:var(--orange)">✎</span> Данные для расписки</div>
+        <div class="names-grid">
+            <div class="field">
+                <label for="lenderName">ФИО займодавца</label>
+                <input type="text" id="lenderName" value="${lenderName}" onchange="calculate()">
+            </div>
+            <div class="field">
+                <label for="lenderPassport">Паспорт займодавца</label>
+                <input type="text" id="lenderPassport" value="${lenderPassport}" onchange="calculate()">
+            </div>
+            <div class="field">
+                <label for="borrowerName">ФИО заёмщика</label>
+                <input type="text" id="borrowerName" value="${borrowerName}" onchange="calculate()">
+            </div>
+            <div class="field">
+                <label for="borrowerPassport">Паспорт заёмщика</label>
+                <input type="text" id="borrowerPassport" value="${borrowerPassport}" onchange="calculate()">
+            </div>
+        </div>
+    </div>
+    <div class="receipt" id="receiptText">${receiptText}</div>
+    <div class="receipt-actions">
+        <button class="btn-sm" onclick="copyReceipt()">Копировать текст</button>
+        <button class="btn-sm" onclick="printReceipt()">Печать</button>
+    </div>`;
+
+    document.getElementById('receiptSection').innerHTML = rHtml;
+}
+
+function copyReceipt() {
+    const text = document.getElementById('receiptText').innerText;
+    navigator.clipboard.writeText(text).then(() => {
+        const btn = event.target;
+        btn.textContent = 'Скопировано!';
+        setTimeout(() => btn.textContent = 'Копировать текст', 1500);
+    });
+}
+
+function printReceipt() {
+    const content = document.getElementById('receiptText').innerHTML;
+    const win = window.open('', '_blank');
+    win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+        <title>Расписка</title>
+        <style>
+            body { font-family: 'Times New Roman', serif; font-size: 14pt; line-height: 1.8;
+                   max-width: 700px; margin: 40px auto; padding: 20px; white-space: pre-wrap; }
+            @media print { body { margin: 0; padding: 20px; } }
+        </style></head><body>${content}</body></html>`);
+    win.document.close();
+    win.print();
 }
 
 calculate();
