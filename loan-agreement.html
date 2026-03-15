@@ -296,7 +296,7 @@ function openShareModal() {
   const bytes = new TextEncoder().encode(jsonStr);
   const encoded = btoa(String.fromCharCode(...bytes));
   const base = location.href.split('?')[0].split('#')[0];
-  const url = base + '?d=' + encoded;
+  const url = base + '?d=' + encodeURIComponent(encoded);
   document.getElementById('shareLink').value = url;
   const target = currentRole==='lender' ? 'заёмщику' : 'займодавцу';
   document.getElementById('modalTitle').textContent = '📤 Ссылка для ' + (currentRole==='lender'?'заёмщика':'займодавца');
@@ -315,8 +315,9 @@ function showToast(msg) {
 }
 // ── Load from URL ──
 function loadFromURL() {
-  const encoded = new URLSearchParams(location.search).get('d');
-  if (!encoded) return;
+  const match = location.search.match(/[?&]d=([^&]*)/);
+  if (!match) return;
+  const encoded = decodeURIComponent(match[1]);
   try {
     const binary = atob(encoded);
     const bytes = Uint8Array.from(binary, c => c.charCodeAt(0));
