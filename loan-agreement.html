@@ -160,9 +160,11 @@
     text-align: center; font-size: 12px; color: #6b7280;
   }
   .disclaimer { text-align: center; font-size: 11px; color: #9ca3af; margin-top: 16px; }
+  .no-print-preview { display: none; }
   @media print {
     body { background: #fff !important; }
     .no-print { display: none !important; }
+    .no-print-preview { display: block !important; }
     .doc { box-shadow: none; border-radius: 0; padding: 20px 24px; }
     .container { padding: 0; }
     .disclaimer { display: none; }
@@ -239,8 +241,8 @@
     <button class="btn btn-share" id="btnShare" onclick="openShareModal()">📤 Отправить второй стороне</button>
     <button class="btn btn-primary" onclick="window.print()">🖨️ Распечатать</button>
   </div>
-  <!-- Document preview -->
-  <div class="doc" id="doc">
+  <!-- Document preview (visible only when printing) -->
+  <div class="doc no-print-preview" id="doc">
     <h1>РАСПИСКА</h1>
     <div class="subtitle">о получении денежных средств в долг</div>
     <div class="meta" id="docMeta"></div>
@@ -254,7 +256,7 @@
       <div class="sig-block"><p>Займодавец:</p><div class="sig-line">(подпись / расшифровка)</div></div>
     </div>
   </div>
-  <p class="disclaimer no-print">⚠️ Данная расписка носит ознакомительный характер. Для крупных сумм рекомендуется нотариальное заверение.</p>
+  <p class="disclaimer no-print no-print-preview">⚠️ Данная расписка носит ознакомительный характер. Для крупных сумм рекомендуется нотариальное заверение.</p>
 </div>
 <!-- Share modal -->
 <div class="modal-overlay" id="shareModal">
