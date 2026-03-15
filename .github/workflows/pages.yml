@@ -37,7 +37,7 @@ jobs:
           cp .nojekyll _site/
 
           # Generate index page
-          python generate_index.py > _site/index.html
+          python src/generate_index.py > _site/index.html
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

@@ -8,13 +8,13 @@ This is a collection of standalone browser-based HTML/JS tools, deployed to GitH
 
 - Each tool is a **single self-contained `.html` file** — all HTML, CSS, and JS inline
 - **No frameworks, no build step for tools** — just push HTML and it's live
-- `generate_index.py` auto-generates the index page during CI
+- `src/generate_index.py` auto-generates the index page during CI
 - GitHub Pages strips `.html` extensions (e.g., `word-counter.html` → `/word-counter`)
 
 ## Key Files
 
 - `.github/workflows/pages.yml` — GitHub Actions deployment workflow
-- `generate_index.py` — Builds `index.html` from all tool files (reads `<title>` and `<meta name="description">`)
+- `src/generate_index.py` — Builds `index.html` from all tool files (reads `<title>` and `<meta name="description">`)
 - `.nojekyll` — Prevents Jekyll processing on GitHub Pages
 
 ## Creating a New Tool
@@ -40,10 +40,10 @@ This is a collection of standalone browser-based HTML/JS tools, deployed to GitH
 ## Deployment
 
 - Pushes to `main` trigger the GitHub Actions workflow
-- The workflow copies all `.html` files to `_site/`, runs `generate_index.py`, and deploys via `actions/deploy-pages`
+- The workflow copies all `.html` files to `_site/`, runs `src/generate_index.py`, and deploys via `actions/deploy-pages`
 - The `index.html` in `_site/` is auto-generated — do not edit it manually
 
 ## Testing
 
 - Open any `.html` file directly in a browser to test locally
-- Run `python3 generate_index.py` to verify index generation
+- Run `python3 src/generate_index.py` to verify index generation
