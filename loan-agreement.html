@@ -292,7 +292,9 @@ function collectData() {
 }
 function openShareModal() {
   const data = collectData();
-  const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+  const jsonStr = JSON.stringify(data);
+  const bytes = new TextEncoder().encode(jsonStr);
+  const encoded = btoa(String.fromCharCode(...bytes));
   const base = location.href.split('?')[0].split('#')[0];
   const url = base + '?d=' + encoded;
   document.getElementById('shareLink').value = url;
@@ -316,7 +318,9 @@ function loadFromURL() {
   const encoded = new URLSearchParams(location.search).get('d');
   if (!encoded) return;
   try {
-    const data = JSON.parse(decodeURIComponent(escape(atob(encoded))));
+    const binary = atob(encoded);
+    const bytes = Uint8Array.from(binary, c => c.charCodeAt(0));
+    const data = JSON.parse(new TextDecoder().decode(bytes));
     receivedData = data;
     const dateFields = ['lBirth','lPDate','bBirth','bPDate','date','returnDate'];
     Object.keys(data).forEach(key => {
