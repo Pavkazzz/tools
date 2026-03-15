@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Долговая расписка — генератор</title>
+<meta name="description" content="Генератор долговой расписки: заполните данные, отправьте ссылку второй стороне, распечатайте">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Golos+Text:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Golos Text', system-ui, -apple-system, sans-serif;
+    background: linear-gradient(135deg, #f0f4ff 0%, #faf5ff 50%, #fff7ed 100%);
+    min-height: 100vh;
+    color: #111;
+  }
+  .container { max-width: 740px; margin: 0 auto; padding: 32px 16px; }
+  .header { text-align: center; margin-bottom: 28px; }
+  .header-pill {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: #fff; padding: 10px 24px; border-radius: 40px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08); margin-bottom: 10px;
+  }
+  .header-pill span:first-child { font-size: 22px; }
+  .header-pill span:last-child {
+    font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 900; color: #111827;
+  }
+  .header p { color: #6b7280; font-size: 13px; }
+  .role-bar {
+    display: flex; gap: 0; border-radius: 12px; overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 24px;
+  }
+  .role-btn {
+    flex: 1; padding: 14px 16px; border: none; cursor: pointer;
+    font-family: 'Golos Text', system-ui, -apple-system, sans-serif; font-size: 14px; font-weight: 600;
+    transition: all 0.25s; background: #fff; color: #6b7280;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .role-btn.active-lender { background: #2563eb; color: #fff; }
+  .role-btn.active-borrower { background: #7c3aed; color: #fff; }
+  .role-btn:not([class*="active-"]):hover { background: #f3f4f6; }
+  .steps {
+    display: flex; align-items: center; justify-content: center; gap: 12px;
+    margin-bottom: 20px; font-size: 13px; color: #9ca3af;
+  }
+  .step-dot {
+    width: 28px; height: 28px; border-radius: 50%; display: flex;
+    align-items: center; justify-content: center; font-weight: 700; font-size: 13px;
+    border: 2px solid #d1d5db; color: #9ca3af; transition: all 0.3s;
+  }
+  .step-dot.done { background: #10b981; border-color: #10b981; color: #fff; }
+  .step-dot.current { border-color: #2563eb; color: #2563eb; }
+  .step-line { width: 40px; height: 2px; background: #e5e7eb; }
+  .card {
+    background: #fff; border-radius: 16px; padding: 24px 28px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.06); margin-bottom: 24px;
+  }
+  .section-title {
+    display: flex; align-items: center; gap: 8px;
+    margin-top: 20px; margin-bottom: 12px; padding-bottom: 8px;
+    border-bottom: 2px solid #e5e7eb;
+  }
+  .section-title:first-child { margin-top: 0; }
+  .section-title .icon { font-size: 18px; }
+  .section-title .text {
+    font-family: 'Playfair Display', serif; font-size: 16px; font-weight: 700; color: #111827;
+  }
+  .row { display: flex; flex-wrap: wrap; gap: 12px; }
+  .field { flex: 1 1 100%; min-width: 0; }
+  .field.half { flex: 1 1 48%; min-width: 200px; }
+  .field.small { flex: 0 0 140px; min-width: 100px; }
+  .field label {
+    display: block; font-size: 11px; font-weight: 600; color: #6b7280;
+    text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;
+  }
+  .field input {
+    width: 100%; padding: 8px 10px; border: 1.5px solid #d1d5db;
+    border-radius: 6px; font-size: 14px; font-family: 'Golos Text', system-ui, -apple-system, sans-serif;
+    outline: none; transition: border-color 0.2s; background: #fafbfc;
+  }
+  .field input:focus { border-color: #2563eb; }
+  .field input:disabled {
+    background: #f3f4f6; color: #6b7280; cursor: not-allowed; border-color: #e5e7eb;
+  }
+  .check-row {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 4px;
+  }
+  .check-row label { display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 14px; }
+  .check-row input[type="checkbox"] { width: 16px; height: 16px; accent-color: #2563eb; }
+  .locked-notice {
+    display: flex; align-items: center; gap: 8px; padding: 10px 14px;
+    background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px;
+    font-size: 13px; color: #166534; margin-bottom: 12px;
+  }
+  .btn-wrap { text-align: center; margin-bottom: 28px; display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+  .btn {
+    padding: 14px 36px; border: none; border-radius: 10px;
+    font-size: 15px; font-weight: 700; font-family: 'Golos Text', system-ui, -apple-system, sans-serif;
+    cursor: pointer; transition: transform 0.15s, box-shadow 0.15s;
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .btn:hover { transform: translateY(-1px); }
+  .btn-primary {
+    color: #fff; background: linear-gradient(135deg, #2563eb, #4f46e5);
+    box-shadow: 0 4px 14px rgba(37,99,235,0.3);
+  }
+  .btn-primary:hover { box-shadow: 0 6px 20px rgba(37,99,235,0.4); }
+  .btn-share {
+    color: #fff; background: linear-gradient(135deg, #7c3aed, #6d28d9);
+    box-shadow: 0 4px 14px rgba(124,58,237,0.3);
+  }
+  .btn-share:hover { box-shadow: 0 6px 20px rgba(124,58,237,0.4); }
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+    z-index: 100; align-items: center; justify-content: center; padding: 16px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: #fff; border-radius: 16px; padding: 28px; max-width: 520px; width: 100%;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+  }
+  .modal h3 { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+  .modal p { font-size: 13px; color: #6b7280; margin-bottom: 16px; line-height: 1.6; }
+  .modal textarea {
+    width: 100%; padding: 10px; border: 1.5px solid #d1d5db; border-radius: 8px;
+    font-size: 12px; font-family: monospace; resize: none; height: 80px;
+    background: #f9fafb; color: #374151;
+  }
+  .modal .btn-row { display: flex; gap: 10px; margin-top: 14px; justify-content: flex-end; }
+  .modal .btn-sm {
+    padding: 9px 20px; border: none; border-radius: 8px; font-size: 13px;
+    font-weight: 600; font-family: 'Golos Text', system-ui, -apple-system, sans-serif; cursor: pointer;
+  }
+  .modal .btn-copy { background: #2563eb; color: #fff; }
+  .modal .btn-close { background: #f3f4f6; color: #374151; }
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
+    background: #111827; color: #fff; padding: 12px 24px; border-radius: 10px;
+    font-size: 14px; font-weight: 600; opacity: 0; transition: all 0.3s; z-index: 200;
+    pointer-events: none;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+  @media (max-width: 500px) {
+    .card { padding: 16px; }
+    .doc { padding: 24px 20px; }
+    .field.half, .field.small { flex: 1 1 100%; min-width: 0; }
+    .signatures { flex-direction: column; gap: 32px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header no-print">
+    <div class="header-pill"><span>📝</span><span>Долговая расписка</span></div>
+    <p>Заполните форму — расписка сформируется автоматически</p>
+  </div>
+  <!-- Role selector -->
+  <div class="role-bar no-print" id="roleBar">
+    <button class="role-btn active-lender" id="roleLender" onclick="setRole('lender')">🤝 Я даю в долг</button>
+    <button class="role-btn" id="roleBorrower" onclick="setRole('borrower')">🙋 Я беру в долг</button>
+  </div>
+  <!-- Steps -->
+  <div class="steps no-print" id="stepsBar">
+    <div class="step-dot current" id="step1">1</div>
+    <div class="step-line"></div>
+    <div class="step-dot" id="step2">2</div>
+    <div class="step-line"></div>
+    <div class="step-dot" id="step3">3</div>
+    <div style="margin-left:8px;font-size:12px" id="stepLabel">Заполните свои данные</div>
+  </div>
+  <!-- Form -->
+  <div class="card no-print" id="formCard">
+    <div id="lenderSection">
+      <div class="section-title"><span class="icon">🤝</span><span class="text">Займодавец (кто даёт деньги)</span></div>
+      <div id="lenderLocked" class="locked-notice" style="display:none">✅ Данные займодавца заполнены</div>
+      <div id="lenderFields" class="row">
+        <div class="field"><label>ФИО полностью</label><input id="lName" placeholder="Петров Пётр Петрович"></div>
+        <div class="field half"><label>Дата рождения</label><input id="lBirth" type="date"></div>
+        <div class="field small"><label>Серия паспорта</label><input id="lPSeries" placeholder="4510" maxlength="4"></div>
+        <div class="field small"><label>Номер паспорта</label><input id="lPNum" placeholder="654321" maxlength="6"></div>
+        <div class="field"><label>Кем выдан</label><input id="lPIssued" placeholder="ОВД района..."></div>
+        <div class="field half"><label>Дата выдачи паспорта</label><input id="lPDate" type="date"></div>
+        <div class="field"><label>Адрес регистрации</label><input id="lAddr" placeholder="г. Москва, ул. Другая, д. 2, кв. 3"></div>
+      </div>
+    </div>
+    <div id="borrowerSection">
+      <div class="section-title"><span class="icon">🙋</span><span class="text">Заёмщик (кто берёт деньги)</span></div>
+      <div id="borrowerLocked" class="locked-notice" style="display:none">✅ Данные заёмщика заполнены</div>
+      <div id="borrowerFields" class="row">
+        <div class="field"><label>ФИО полностью</label><input id="bName" placeholder="Иванов Иван Иванович"></div>
+        <div class="field half"><label>Дата рождения</label><input id="bBirth" type="date"></div>
+        <div class="field small"><label>Серия паспорта</label><input id="bPSeries" placeholder="4515" maxlength="4"></div>
+        <div class="field small"><label>Номер паспорта</label><input id="bPNum" placeholder="123456" maxlength="6"></div>
+        <div class="field"><label>Кем выдан</label><input id="bPIssued" placeholder="ОВД района..."></div>
+        <div class="field half"><label>Дата выдачи паспорта</label><input id="bPDate" type="date"></div>
+        <div class="field"><label>Адрес регистрации</label><input id="bAddr" placeholder="г. Москва, ул. Примерная, д. 1, кв. 1"></div>
+      </div>
+    </div>
+    <div class="section-title"><span class="icon">📍</span><span class="text">Место и условия</span></div>
+    <div class="row">
+      <div class="field half"><label>Город</label><input id="city" placeholder="г. Москва"></div>
+      <div class="field half"><label>Дата составления</label><input id="date" type="date"></div>
+      <div class="field half"><label>Сумма (₽)</label><input id="amount" type="number" placeholder="100000"></div>
+      <div class="field half"><label>Дата возврата</label><input id="returnDate" type="date"></div>
+    </div>
+    <div class="check-row">
+      <label><input id="hasInterest" type="checkbox"> Под проценты</label>
+      <div class="field small" id="rateWrap" style="display:none"><label>% годовых</label><input id="rate" type="number" placeholder="10"></div>
+    </div>
+  </div>
+  <div class="btn-wrap no-print" id="actions">
+    <button class="btn btn-share" id="btnShare" onclick="openShareModal()">📤 Отправить второй стороне</button>
+  </div>
+</div>
+<!-- Share modal -->
+<div class="modal-overlay" id="shareModal">
+  <div class="modal">
+    <h3 id="modalTitle">📤 Ссылка для второй стороны</h3>
+    <p id="modalDesc"></p>
+    <textarea id="shareLink" readonly></textarea>
+    <div class="btn-row">
+      <button class="btn-sm btn-close" onclick="closeShareModal()">Закрыть</button>
+      <button class="btn-sm btn-copy" onclick="copyLink()">📋 Скопировать</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+let currentRole = 'lender';
+let receivedData = null;
+function v(id){return document.getElementById(id).value.trim();}
+// ── Role ──
+function setRole(role) {
+  if (receivedData) return;
+  currentRole = role;
+  document.getElementById('roleLender').className = 'role-btn' + (role==='lender'?' active-lender':'');
+  document.getElementById('roleBorrower').className = 'role-btn' + (role==='borrower'?' active-borrower':'');
+  reorderSections();
+  updateSteps();
+}
+function reorderSections() {
+  const form = document.getElementById('formCard');
+  const ls = document.getElementById('lenderSection');
+  const bs = document.getElementById('borrowerSection');
+  if (receivedData) {
+    const senderIsLender = receivedData.from === 'lender';
+    lockGroup('lenderFields', senderIsLender);
+    lockGroup('borrowerFields', !senderIsLender);
+    document.getElementById('lenderLocked').style.display = senderIsLender ? '' : 'none';
+    document.getElementById('borrowerLocked').style.display = !senderIsLender ? '' : 'none';
+    ['city','date','amount','returnDate','hasInterest','rate'].forEach(id => {
+      const el = document.getElementById(id); if(el) el.disabled = true;
+    });
+    // put receiver's section first
+    if (currentRole === 'lender') form.insertBefore(ls, bs);
+    else form.insertBefore(bs, ls);
+    return;
+  }
+  document.getElementById('lenderLocked').style.display = 'none';
+  document.getElementById('borrowerLocked').style.display = 'none';
+  lockGroup('lenderFields', false);
+  lockGroup('borrowerFields', false);
+  if (currentRole === 'lender') form.insertBefore(ls, bs);
+  else form.insertBefore(bs, ls);
+}
+function lockGroup(id, locked) {
+  const el = document.getElementById(id); if(!el) return;
+  el.querySelectorAll('input').forEach(i => i.disabled = locked);
+  el.style.display = locked ? 'none' : '';
+}
+function updateSteps() {
+  const s1=document.getElementById('step1'),s2=document.getElementById('step2'),s3=document.getElementById('step3'),lb=document.getElementById('stepLabel');
+  if (receivedData) {
+    s1.className='step-dot done'; s2.className='step-dot current'; s3.className='step-dot';
+    const who = receivedData.from==='lender' ? 'Займодавец' : 'Заёмщик';
+    lb.textContent = who + ' заполнил данные → заполните свои и распечатайте';
+  } else {
+    s1.className='step-dot current'; s2.className='step-dot'; s3.className='step-dot';
+    lb.textContent = 'Заполните свои данные';
+  }
+}
+// ── Share ──
+function collectData() {
+  const fields = currentRole==='lender'
+    ? ['lName','lBirth','lPSeries','lPNum','lPIssued','lPDate','lAddr']
+    : ['bName','bBirth','bPSeries','bPNum','bPIssued','bPDate','bAddr'];
+  const data = { from: currentRole };
+  fields.forEach(f => data[f] = v(f));
+  ['city','date','amount','returnDate','rate'].forEach(f => data[f] = v(f));
+  data.hasInterest = document.getElementById('hasInterest').checked;
+  return data;
+}
+function openShareModal() {
+  const data = collectData();
+  const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+  const base = location.href.split('?')[0].split('#')[0];
+  const url = base + '?d=' + encoded;
+  document.getElementById('shareLink').value = url;
+  const target = currentRole==='lender' ? 'заёмщику' : 'займодавцу';
+  document.getElementById('modalTitle').textContent = '📤 Ссылка для ' + (currentRole==='lender'?'заёмщика':'займодавца');
+  document.getElementById('modalDesc').textContent = 'Скопируйте и отправьте ' + target + '. Он откроет ссылку, заполнит свои данные и распечатает готовую расписку.';
+  document.getElementById('shareModal').classList.add('open');
+}
+function closeShareModal() { document.getElementById('shareModal').classList.remove('open'); }
+function copyLink() {
+  const ta = document.getElementById('shareLink');
+  ta.select();
+  navigator.clipboard.writeText(ta.value).then(()=>showToast('Ссылка скопирована!')).catch(()=>{document.execCommand('copy');showToast('Ссылка скопирована!');});
+}
+function showToast(msg) {
+  const t=document.getElementById('toast'); t.textContent=msg;
+  t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2200);
+}
+// ── Load from URL ──
+function loadFromURL() {
+  const encoded = new URLSearchParams(location.search).get('d');
+  if (!encoded) return;
+  try {
+    const data = JSON.parse(decodeURIComponent(escape(atob(encoded))));
+    receivedData = data;
+    Object.keys(data).forEach(key => {
+      if (key==='from') return;
+      const el = document.getElementById(key); if(!el) return;
+      if (el.type==='checkbox') { el.checked = data[key]; el.dispatchEvent(new Event('change')); }
+      else el.value = data[key];
+    });
+    currentRole = data.from==='lender' ? 'borrower' : 'lender';
+    document.getElementById('roleBar').style.display = 'none';
+    document.getElementById('btnShare').style.display = 'none';
+    reorderSections();
+    updateSteps();
+  } catch(e) { console.warn('Bad shared data', e); }
+}
+// ── Init ──
+document.getElementById('hasInterest').addEventListener('change', function(){
+  document.getElementById('rateWrap').style.display = this.checked ? '' : 'none';
+});
+document.getElementById('shareModal').addEventListener('click', function(e){
+  if(e.target===this) closeShareModal();
+});
+loadFromURL();
+</script>
+</body>
+</html>
