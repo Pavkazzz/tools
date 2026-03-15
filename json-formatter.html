@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Format, validate, and minify JSON with syntax highlighting.">
+    <title>JSON Formatter</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+            color: #1a1a1a;
+        }
+        h1 { margin-bottom: 1rem; }
+        textarea {
+            width: 100%;
+            height: 250px;
+            padding: 0.75rem;
+            font-size: 0.9rem;
+            font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            resize: vertical;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+        .buttons {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+            flex-wrap: wrap;
+        }
+        button {
+            padding: 0.5rem 1.2rem;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+        button:hover { background: #1d4ed8; }
+        button.secondary {
+            background: #6b7280;
+        }
+        button.secondary:hover { background: #4b5563; }
+        .error {
+            margin-top: 0.75rem;
+            padding: 0.75rem;
+            background: #fef2f2;
+            color: #dc2626;
+            border-radius: 8px;
+            font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
+            font-size: 0.85rem;
+            display: none;
+        }
+        .output-section {
+            margin-top: 1rem;
+        }
+        .output-label {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+        pre {
+            padding: 1rem;
+            background: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 0.85rem;
+            line-height: 1.5;
+        }
+        .string { color: #059669; }
+        .number { color: #d97706; }
+        .boolean { color: #7c3aed; }
+        .null { color: #9ca3af; }
+        .key { color: #2563eb; }
+    </style>
+</head>
+<body>
+    <h1>JSON Formatter</h1>
+    <textarea id="input" placeholder='Paste your JSON here... e.g. {"name":"John","age":30}'></textarea>
+    <div class="buttons">
+        <button onclick="formatJSON()">Format</button>
+        <button class="secondary" onclick="minifyJSON()">Minify</button>
+        <button class="secondary" onclick="copyOutput()">Copy Output</button>
+    </div>
+    <div class="error" id="error"></div>
+    <div class="output-section">
+        <pre id="output"></pre>
+    </div>
+
+    <script>
+        function formatJSON() {
+            const input = document.getElementById('input').value.trim();
+            const error = document.getElementById('error');
+            const output = document.getElementById('output');
+
+            if (!input) {
+                error.style.display = 'none';
+                output.innerHTML = '';
+                return;
+            }
+
+            try {
+                const parsed = JSON.parse(input);
+                const formatted = JSON.stringify(parsed, null, 2);
+                error.style.display = 'none';
+                output.innerHTML = syntaxHighlight(formatted);
+            } catch (e) {
+                error.textContent = e.message;
+                error.style.display = 'block';
+                output.innerHTML = '';
+            }
+        }
+
+        function minifyJSON() {
+            const input = document.getElementById('input').value.trim();
+            const error = document.getElementById('error');
+            const output = document.getElementById('output');
+
+            if (!input) return;
+
+            try {
+                const parsed = JSON.parse(input);
+                const minified = JSON.stringify(parsed);
+                error.style.display = 'none';
+                output.textContent = minified;
+            } catch (e) {
+                error.textContent = e.message;
+                error.style.display = 'block';
+            }
+        }
+
+        function copyOutput() {
+            const output = document.getElementById('output');
+            navigator.clipboard.writeText(output.textContent);
+        }
+
+        function syntaxHighlight(json) {
+            return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
+                function(match) {
+                    let cls = 'number';
+                    if (/^"/.test(match)) {
+                        if (/:$/.test(match)) {
+                            cls = 'key';
+                        } else {
+                            cls = 'string';
+                        }
+                    } else if (/true|false/.test(match)) {
+                        cls = 'boolean';
+                    } else if (/null/.test(match)) {
+                        cls = 'null';
+                    }
+                    return '<span class="' + cls + '">' + match + '</span>';
+                }
+            );
+        }
+    </script>
+</body>
+</html>
