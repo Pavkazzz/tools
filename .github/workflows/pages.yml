@@ -33,8 +33,9 @@ jobs:
           find . -name "*.html" -not -path "./_site/*" -not -path "./.github/*" \
             -exec cp --parents {} _site/ \;
 
-          # Copy .nojekyll
+          # Copy .nojekyll and CNAME
           cp .nojekyll _site/
+          cp CNAME _site/
 
           # Generate index page
           python src/generate_index.py > _site/index.html
