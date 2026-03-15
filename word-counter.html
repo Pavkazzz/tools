@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Count words, characters, sentences, and paragraphs in any text.">
+    <title>Word Counter</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+            color: #1a1a1a;
+        }
+        h1 { margin-bottom: 1rem; }
+        textarea {
+            width: 100%;
+            height: 250px;
+            padding: 0.75rem;
+            font-size: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            resize: vertical;
+            font-family: inherit;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .stat {
+            padding: 1rem;
+            background: #f0f4f8;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #2563eb;
+        }
+        .stat-label {
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 0.25rem;
+        }
+        .meta {
+            margin-top: 1rem;
+            color: #888;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+    <h1>Word Counter</h1>
+    <textarea id="input" placeholder="Paste or type your text here..."></textarea>
+    <div class="stats">
+        <div class="stat">
+            <div class="stat-value" id="words">0</div>
+            <div class="stat-label">Words</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value" id="chars">0</div>
+            <div class="stat-label">Characters</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value" id="sentences">0</div>
+            <div class="stat-label">Sentences</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value" id="paragraphs">0</div>
+            <div class="stat-label">Paragraphs</div>
+        </div>
+    </div>
+    <div class="meta" id="meta"></div>
+
+    <script>
+        const input = document.getElementById('input');
+
+        function update() {
+            const text = input.value;
+            const trimmed = text.trim();
+
+            const words = trimmed ? trimmed.split(/\s+/).length : 0;
+            const chars = text.length;
+            const sentences = trimmed ? (trimmed.match(/[.!?]+(\s|$)/g) || []).length : 0;
+            const paragraphs = trimmed ? trimmed.split(/\n\s*\n/).filter(p => p.trim()).length : 0;
+
+            document.getElementById('words').textContent = words;
+            document.getElementById('chars').textContent = chars;
+            document.getElementById('sentences').textContent = sentences;
+            document.getElementById('paragraphs').textContent = paragraphs || (trimmed ? 1 : 0);
+
+            const readTime = Math.max(1, Math.ceil(words / 200));
+            document.getElementById('meta').textContent = words > 0
+                ? `~${readTime} min read`
+                : '';
+        }
+
+        input.addEventListener('input', update);
+    </script>
+</body>
+</html>

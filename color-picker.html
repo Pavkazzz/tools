@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Pick a color and get its hex, RGB, and HSL values. Includes a contrast checker.">
+    <title>Color Picker</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 600px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+            color: #1a1a1a;
+        }
+        h1 { margin-bottom: 1rem; }
+        .picker-row {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        input[type="color"] {
+            width: 80px;
+            height: 50px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            padding: 0;
+        }
+        input[type="text"] {
+            padding: 0.5rem 0.75rem;
+            font-size: 1rem;
+            font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            width: 140px;
+        }
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #2563eb;
+        }
+        .values {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+        .value-card {
+            padding: 0.75rem 1rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+            cursor: pointer;
+        }
+        .value-card:hover { background: #e9ecef; }
+        .value-card .label {
+            font-size: 0.75rem;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .value-card .val {
+            font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
+            font-size: 0.95rem;
+            margin-top: 0.25rem;
+        }
+        .preview {
+            height: 120px;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+        }
+        .contrast-section h2 {
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+        }
+        .contrast-row {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        .contrast-badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .pass { background: #d4edda; color: #155724; }
+        .fail { background: #f8d7da; color: #721c24; }
+        .copied {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1a1a1a;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+        .copied.show { opacity: 1; }
+    </style>
+</head>
+<body>
+    <h1>Color Picker</h1>
+    <div class="picker-row">
+        <input type="color" id="picker" value="#2563eb">
+        <input type="text" id="hexInput" value="#2563eb" maxlength="7">
+    </div>
+    <div class="preview" id="preview"></div>
+    <div class="values" id="values"></div>
+    <div class="contrast-section">
+        <h2>Contrast Ratios</h2>
+        <div id="contrast"></div>
+    </div>
+    <div class="copied" id="toast">Copied!</div>
+
+    <script>
+        const picker = document.getElementById('picker');
+        const hexInput = document.getElementById('hexInput');
+
+        function hexToRgb(hex) {
+            const r = parseInt(hex.slice(1, 3), 16);
+            const g = parseInt(hex.slice(3, 5), 16);
+            const b = parseInt(hex.slice(5, 7), 16);
+            return { r, g, b };
+        }
+
+        function rgbToHsl(r, g, b) {
+            r /= 255; g /= 255; b /= 255;
+            const max = Math.max(r, g, b), min = Math.min(r, g, b);
+            let h, s, l = (max + min) / 2;
+            if (max === min) {
+                h = s = 0;
+            } else {
+                const d = max - min;
+                s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                switch (max) {
+                    case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+                    case g: h = ((b - r) / d + 2) / 6; break;
+                    case b: h = ((r - g) / d + 4) / 6; break;
+                }
+            }
+            return {
+                h: Math.round(h * 360),
+                s: Math.round(s * 100),
+                l: Math.round(l * 100)
+            };
+        }
+
+        function luminance(r, g, b) {
+            const a = [r, g, b].map(v => {
+                v /= 255;
+                return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+            });
+            return a[0] * 0.2126 + a[1] * 0.7152 + a[2] * 0.0722;
+        }
+
+        function contrastRatio(l1, l2) {
+            const lighter = Math.max(l1, l2);
+            const darker = Math.min(l1, l2);
+            return (lighter + 0.05) / (darker + 0.05);
+        }
+
+        function update(hex) {
+            const { r, g, b } = hexToRgb(hex);
+            const hsl = rgbToHsl(r, g, b);
+
+            const preview = document.getElementById('preview');
+            preview.style.background = hex;
+            const lum = luminance(r, g, b);
+            preview.style.color = lum > 0.179 ? '#000' : '#fff';
+            preview.textContent = hex.toUpperCase();
+
+            const values = [
+                { label: 'HEX', val: hex.toUpperCase() },
+                { label: 'RGB', val: `rgb(${r}, ${g}, ${b})` },
+                { label: 'HSL', val: `hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)` },
+            ];
+
+            document.getElementById('values').innerHTML = values.map(v =>
+                `<div class="value-card" onclick="copy('${v.val}')">
+                    <div class="label">${v.label} (click to copy)</div>
+                    <div class="val">${v.val}</div>
+                </div>`
+            ).join('');
+
+            const whiteContrast = contrastRatio(lum, 1);
+            const blackContrast = contrastRatio(lum, 0);
+
+            document.getElementById('contrast').innerHTML = `
+                <div class="contrast-row">
+                    <span>vs White (#FFFFFF):</span>
+                    <strong>${whiteContrast.toFixed(2)}:1</strong>
+                    <span class="contrast-badge ${whiteContrast >= 4.5 ? 'pass' : 'fail'}">
+                        AA ${whiteContrast >= 4.5 ? 'Pass' : 'Fail'}
+                    </span>
+                    <span class="contrast-badge ${whiteContrast >= 7 ? 'pass' : 'fail'}">
+                        AAA ${whiteContrast >= 7 ? 'Pass' : 'Fail'}
+                    </span>
+                </div>
+                <div class="contrast-row">
+                    <span>vs Black (#000000):</span>
+                    <strong>${blackContrast.toFixed(2)}:1</strong>
+                    <span class="contrast-badge ${blackContrast >= 4.5 ? 'pass' : 'fail'}">
+                        AA ${blackContrast >= 4.5 ? 'Pass' : 'Fail'}
+                    </span>
+                    <span class="contrast-badge ${blackContrast >= 7 ? 'pass' : 'fail'}">
+                        AAA ${blackContrast >= 7 ? 'Pass' : 'Fail'}
+                    </span>
+                </div>`;
+        }
+
+        function copy(text) {
+            navigator.clipboard.writeText(text);
+            const toast = document.getElementById('toast');
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 1500);
+        }
+
+        picker.addEventListener('input', () => {
+            hexInput.value = picker.value;
+            update(picker.value);
+        });
+
+        hexInput.addEventListener('input', () => {
+            const val = hexInput.value;
+            if (/^#[0-9a-fA-F]{6}$/.test(val)) {
+                picker.value = val;
+                update(val);
+            }
+        });
+
+        update('#2563eb');
+    </script>
+</body>
+</html>
