@@ -140,35 +140,6 @@
     pointer-events: none;
   }
   .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
-  .doc {
-    background: #fff; border-radius: 16px; padding: 40px 48px;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.06);
-    line-height: 1.85; font-size: 14px; color: #111;
-  }
-  .doc h1 {
-    font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 900;
-    text-align: center; letter-spacing: 0.04em; margin-bottom: 2px;
-  }
-  .doc .subtitle { text-align: center; font-size: 13px; color: #6b7280; margin-bottom: 20px; }
-  .doc .meta { text-align: right; font-size: 13px; color: #374151; margin-bottom: 16px; }
-  .doc p { text-indent: 32px; text-align: justify; margin-bottom: 6px; }
-  .doc b { font-weight: 700; }
-  .signatures { margin-top: 48px; display: flex; justify-content: space-between; font-size: 13px; }
-  .sig-block p:first-child { font-weight: 600; margin-bottom: 40px; }
-  .sig-line {
-    border-top: 1px solid #000; padding-top: 4px; min-width: 220px;
-    text-align: center; font-size: 12px; color: #6b7280;
-  }
-  .disclaimer { text-align: center; font-size: 11px; color: #9ca3af; margin-top: 16px; }
-  .no-print-preview { display: none; }
-  @media print {
-    body { background: #fff !important; }
-    .no-print { display: none !important; }
-    .no-print-preview { display: block !important; }
-    .doc { box-shadow: none; border-radius: 0; padding: 20px 24px; }
-    .container { padding: 0; }
-    .disclaimer { display: none; }
-  }
   @media (max-width: 500px) {
     .card { padding: 16px; }
     .doc { padding: 24px 20px; }
@@ -239,24 +210,7 @@
   </div>
   <div class="btn-wrap no-print" id="actions">
     <button class="btn btn-share" id="btnShare" onclick="openShareModal()">📤 Отправить второй стороне</button>
-    <button class="btn btn-primary" onclick="window.print()">🖨️ Распечатать</button>
   </div>
-  <!-- Document preview (visible only when printing) -->
-  <div class="doc no-print-preview" id="doc">
-    <h1>РАСПИСКА</h1>
-    <div class="subtitle">о получении денежных средств в долг</div>
-    <div class="meta" id="docMeta"></div>
-    <p id="docBorrower"></p>
-    <p id="docLender"></p>
-    <p id="docAmount"></p>
-    <p id="docTerms"></p>
-    <p>Денежные средства получены мной лично и в полном объёме, претензий к займодавцу не имею.</p>
-    <div class="signatures">
-      <div class="sig-block"><p>Заёмщик:</p><div class="sig-line">(подпись / расшифровка)</div></div>
-      <div class="sig-block"><p>Займодавец:</p><div class="sig-line">(подпись / расшифровка)</div></div>
-    </div>
-  </div>
-  <p class="disclaimer no-print no-print-preview">⚠️ Данная расписка носит ознакомительный характер. Для крупных сумм рекомендуется нотариальное заверение.</p>
 </div>
 <!-- Share modal -->
 <div class="modal-overlay" id="shareModal">
@@ -272,34 +226,8 @@
 </div>
 <div class="toast" id="toast"></div>
 <script>
-const B = '________________________________________';
-const months = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
 let currentRole = 'lender';
 let receivedData = null;
-function fmtDate(val) {
-  if (!val) return '«___» ____________ 20___ г.';
-  const d = new Date(val + 'T00:00:00');
-  return '\u00AB' + d.getDate() + '\u00BB ' + months[d.getMonth()] + ' ' + d.getFullYear() + ' г.';
-}
-function numWords(num) {
-  if (!num || num <= 0) return '___';
-  num = Math.floor(num);
-  const o=['','один','два','три','четыре','пять','шесть','семь','восемь','девять','десять',
-    'одиннадцать','двенадцать','тринадцать','четырнадцать','пятнадцать','шестнадцать',
-    'семнадцать','восемнадцать','девятнадцать'];
-  const t=['','','двадцать','тридцать','сорок','пятьдесят','шестьдесят','семьдесят','восемьдесят','девяносто'];
-  const h=['','сто','двести','триста','четыреста','пятьсот','шестьсот','семьсот','восемьсот','девятьсот'];
-  function pl(n,f){const m10=n%10,m100=n%100;if(m100>=11&&m100<=19)return f[2];if(m10===1)return f[0];if(m10>=2&&m10<=4)return f[1];return f[2];}
-  function c(n){
-    if(n===0)return '';if(n<20)return o[n];if(n<100)return(t[Math.floor(n/10)]+' '+o[n%10]).trim();
-    if(n<1000)return(h[Math.floor(n/100)]+' '+c(n%100)).trim();
-    if(n<1e6){const k=Math.floor(n/1000);let w=c(k);if(k%10===1&&k%100!==11)w=w.replace(/один$/,'одна');if(k%10===2&&k%100!==12)w=w.replace(/два$/,'две');return(w+' '+pl(k,['тысяча','тысячи','тысяч'])+' '+c(n%1000)).trim();}
-    if(n<1e9){const m=Math.floor(n/1e6);return(c(m)+' '+pl(m,['миллион','миллиона','миллионов'])+' '+c(n%1e6)).trim();}
-    return String(num);
-  }
-  return c(num);
-}
-function rublePl(n){const m10=n%10,m100=n%100;if(m100>=11&&m100<=19)return'рублей';if(m10===1)return'рубль';if(m10>=2&&m10<=4)return'рубля';return'рублей';}
 function v(id){return document.getElementById(id).value.trim();}
 // ── Role ──
 function setRole(role) {
@@ -403,42 +331,14 @@ function loadFromURL() {
     updateSteps();
   } catch(e) { console.warn('Bad shared data', e); }
 }
-// ── Document preview ──
-function updateDoc() {
-  document.getElementById('docMeta').innerHTML = (v('city')||B) + '<br>' + fmtDate(v('date'));
-  document.getElementById('docBorrower').innerHTML =
-    'Я, <b>'+(v('bName')||B)+'</b>, '+
-    (v('bBirth')?fmtDate(v('bBirth')).replace(/[\u00AB\u00BB]/g,''):'__________')+' года рождения, '+
-    'паспорт серия <b>'+(v('bPSeries')||'____')+'</b> № <b>'+(v('bPNum')||'______')+'</b>, '+
-    'выдан '+(v('bPIssued')||B)+' '+(v('bPDate')?fmtDate(v('bPDate')):'«___» _______ 20__ г.')+', '+
-    'зарегистрированный(-ая) по адресу: '+(v('bAddr')||B)+', получил(-а) от';
-  document.getElementById('docLender').innerHTML =
-    '<b>'+(v('lName')||B)+'</b>, '+
-    (v('lBirth')?fmtDate(v('lBirth')).replace(/[\u00AB\u00BB]/g,''):'__________')+' года рождения, '+
-    'паспорт серия <b>'+(v('lPSeries')||'____')+'</b> № <b>'+(v('lPNum')||'______')+'</b>, '+
-    'выдан '+(v('lPIssued')||B)+' '+(v('lPDate')?fmtDate(v('lPDate')):'«___» _______ 20__ г.')+', '+
-    'зарегистрированный(-ая) по адресу: '+(v('lAddr')||B)+',';
-  const amt=parseInt(v('amount'))||0;
-  document.getElementById('docAmount').innerHTML =
-    'денежные средства в размере <b>'+(amt>0?amt.toLocaleString('ru-RU'):'______')+'</b> '+
-    '('+numWords(amt)+') '+(amt>0?rublePl(amt):'рублей')+'.';
-  const hasInt=document.getElementById('hasInterest').checked, rate=v('rate');
-  const intText = hasInt&&rate ? ' с уплатой процентов в размере '+rate+'% годовых' : ' без уплаты процентов';
-  document.getElementById('docTerms').innerHTML =
-    'Обязуюсь вернуть полученные денежные средства в полном объёме'+intText+
-    ' в срок до <b>'+(v('returnDate')?fmtDate(v('returnDate')):'«___» ____________ 20___ г.')+'</b>';
-}
 // ── Init ──
 document.getElementById('hasInterest').addEventListener('change', function(){
   document.getElementById('rateWrap').style.display = this.checked ? '' : 'none';
-  updateDoc();
 });
-document.querySelectorAll('input').forEach(el => el.addEventListener('input', updateDoc));
 document.getElementById('shareModal').addEventListener('click', function(e){
   if(e.target===this) closeShareModal();
 });
 loadFromURL();
-updateDoc();
 </script>
 </body>
 </html>
