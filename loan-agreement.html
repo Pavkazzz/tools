@@ -175,11 +175,11 @@
       <div id="lenderLocked" class="locked-notice" style="display:none">✅ Данные займодавца заполнены</div>
       <div id="lenderFields" class="row">
         <div class="field"><label>ФИО полностью</label><input id="lName" placeholder="Петров Пётр Петрович"></div>
-        <div class="field half"><label>Дата рождения</label><input id="lBirth" type="date"></div>
+        <div class="field half"><label>Дата рождения</label><input id="lBirth" type="text" placeholder="дд.мм.гггг" maxlength="10" class="date-input"></div>
         <div class="field small"><label>Серия паспорта</label><input id="lPSeries" placeholder="4510" maxlength="4"></div>
         <div class="field small"><label>Номер паспорта</label><input id="lPNum" placeholder="654321" maxlength="6"></div>
         <div class="field"><label>Кем выдан</label><input id="lPIssued" placeholder="ОВД района..."></div>
-        <div class="field half"><label>Дата выдачи паспорта</label><input id="lPDate" type="date"></div>
+        <div class="field half"><label>Дата выдачи паспорта</label><input id="lPDate" type="text" placeholder="дд.мм.гггг" maxlength="10" class="date-input"></div>
         <div class="field"><label>Адрес регистрации</label><input id="lAddr" placeholder="г. Москва, ул. Другая, д. 2, кв. 3"></div>
       </div>
     </div>
@@ -188,20 +188,20 @@
       <div id="borrowerLocked" class="locked-notice" style="display:none">✅ Данные заёмщика заполнены</div>
       <div id="borrowerFields" class="row">
         <div class="field"><label>ФИО полностью</label><input id="bName" placeholder="Иванов Иван Иванович"></div>
-        <div class="field half"><label>Дата рождения</label><input id="bBirth" type="date"></div>
+        <div class="field half"><label>Дата рождения</label><input id="bBirth" type="text" placeholder="дд.мм.гггг" maxlength="10" class="date-input"></div>
         <div class="field small"><label>Серия паспорта</label><input id="bPSeries" placeholder="4515" maxlength="4"></div>
         <div class="field small"><label>Номер паспорта</label><input id="bPNum" placeholder="123456" maxlength="6"></div>
         <div class="field"><label>Кем выдан</label><input id="bPIssued" placeholder="ОВД района..."></div>
-        <div class="field half"><label>Дата выдачи паспорта</label><input id="bPDate" type="date"></div>
+        <div class="field half"><label>Дата выдачи паспорта</label><input id="bPDate" type="text" placeholder="дд.мм.гггг" maxlength="10" class="date-input"></div>
         <div class="field"><label>Адрес регистрации</label><input id="bAddr" placeholder="г. Москва, ул. Примерная, д. 1, кв. 1"></div>
       </div>
     </div>
     <div class="section-title"><span class="icon">📍</span><span class="text">Место и условия</span></div>
     <div class="row">
       <div class="field half"><label>Город</label><input id="city" placeholder="г. Москва"></div>
-      <div class="field half"><label>Дата составления</label><input id="date" type="date"></div>
+      <div class="field half"><label>Дата составления</label><input id="date" type="text" placeholder="дд.мм.гггг" maxlength="10" class="date-input"></div>
       <div class="field half"><label>Сумма (₽)</label><input id="amount" type="number" placeholder="100000"></div>
-      <div class="field half"><label>Дата возврата</label><input id="returnDate" type="date"></div>
+      <div class="field half"><label>Дата возврата</label><input id="returnDate" type="text" placeholder="дд.мм.гггг" maxlength="10" class="date-input"></div>
     </div>
     <div class="check-row">
       <label><input id="hasInterest" type="checkbox"> Под проценты</label>
@@ -318,11 +318,14 @@ function loadFromURL() {
   try {
     const data = JSON.parse(decodeURIComponent(escape(atob(encoded))));
     receivedData = data;
+    const dateFields = ['lBirth','lPDate','bBirth','bPDate','date','returnDate'];
     Object.keys(data).forEach(key => {
       if (key==='from') return;
       const el = document.getElementById(key); if(!el) return;
       if (el.type==='checkbox') { el.checked = data[key]; el.dispatchEvent(new Event('change')); }
-      else el.value = data[key];
+      else {
+        el.value = dateFields.includes(key) ? isoToDmy(data[key]) : data[key];
+      }
     });
     currentRole = data.from==='lender' ? 'borrower' : 'lender';
     document.getElementById('roleBar').style.display = 'none';
@@ -331,6 +334,27 @@ function loadFromURL() {
     updateSteps();
   } catch(e) { console.warn('Bad shared data', e); }
 }
+// ── Date formatting (dd.mm.yyyy) ──
+function formatDateInput(e) {
+  const input = e.target;
+  let val = input.value.replace(/[^\d]/g, '');
+  if (val.length > 8) val = val.slice(0, 8);
+  let formatted = '';
+  if (val.length > 0) formatted = val.slice(0, 2);
+  if (val.length > 2) formatted += '.' + val.slice(2, 4);
+  if (val.length > 4) formatted += '.' + val.slice(4, 8);
+  input.value = formatted;
+}
+// Convert yyyy-mm-dd (ISO) to dd.mm.yyyy for backward compatibility with old links
+function isoToDmy(val) {
+  if (!val) return val;
+  const m = val.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (m) return m[3] + '.' + m[2] + '.' + m[1];
+  return val;
+}
+document.querySelectorAll('.date-input').forEach(function(input) {
+  input.addEventListener('input', formatDateInput);
+});
 // ── Init ──
 document.getElementById('hasInterest').addEventListener('change', function(){
   document.getElementById('rateWrap').style.display = this.checked ? '' : 'none';
