@@ -26,7 +26,7 @@ This is a collection of standalone browser-based HTML/JS tools, deployed to GitH
    - All CSS in a `<style>` block, all JS in a `<script>` block
 3. No external dependencies unless explicitly needed (e.g., Pyodide, Marked)
 4. Make it responsive/mobile-friendly
-5. Push to `main` — deployment is automatic
+5. Push to `master` — deployment is automatic
 
 ## Conventions
 
@@ -39,7 +39,7 @@ This is a collection of standalone browser-based HTML/JS tools, deployed to GitH
 
 ## Deployment
 
-- Pushes to `main` trigger the GitHub Actions workflow
+- Pushes to `master` trigger the GitHub Actions workflow
 - The workflow copies all `.html` files to `_site/`, runs `src/generate_index.py`, and deploys via `actions/deploy-pages`
 - The `index.html` in `_site/` is auto-generated — do not edit it manually
 
