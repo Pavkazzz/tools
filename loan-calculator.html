@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Кредитный калькулятор</title>
+    <meta name="description" content="Расчёт займа: аннуитетные платежи и возврат в конце срока для разных процентных ставок">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: #f8f9fa;
+            color: #1a1a1a;
+            line-height: 1.5;
+            padding: 1rem;
+        }
+        .container {
+            max-width: 900px;
+            margin: 2rem auto;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 0.25rem;
+            color: #2563eb;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 2rem;
+            font-size: 0.95rem;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .field label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+            font-size: 0.9rem;
+        }
+        .field input {
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+            border: 1.5px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border-color 0.15s;
+        }
+        .field input:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+        }
+        .field .hint {
+            font-size: 0.8rem;
+            color: #888;
+            margin-top: 0.2rem;
+        }
+        button {
+            display: block;
+            width: 100%;
+            max-width: 300px;
+            margin: 0 auto 2rem;
+            padding: 0.65rem 1.5rem;
+            background: #2563eb;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        button:hover { background: #1d4ed8; }
+        .results-section h2 {
+            margin: 1.5rem 0 0.75rem;
+            font-size: 1.15rem;
+            color: #1a1a1a;
+        }
+        .table-wrap {
+            overflow-x: auto;
+            margin-bottom: 1rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.92rem;
+            background: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        th, td {
+            padding: 0.55rem 0.75rem;
+            text-align: right;
+            border-bottom: 1px solid #e5e7eb;
+            white-space: nowrap;
+        }
+        th {
+            background: #2563eb;
+            color: #fff;
+            font-weight: 600;
+        }
+        td:first-child, th:first-child { text-align: left; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: #f0f5ff; }
+        .fmt { font-variant-numeric: tabular-nums; }
+        @media (max-width: 600px) {
+            .container { margin: 1rem auto; }
+            th, td { padding: 0.4rem 0.5rem; font-size: 0.82rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Кредитный калькулятор</h1>
+    <p class="subtitle">Сравнение ставок: аннуитет и возврат в конце срока</p>
+
+    <div class="form-grid">
+        <div class="field">
+            <label for="amount">Сумма займа, ₽</label>
+            <input type="number" id="amount" value="700000" min="1000" step="1000">
+        </div>
+        <div class="field">
+            <label for="months">Срок, месяцев</label>
+            <input type="number" id="months" value="12" min="1" max="360">
+        </div>
+        <div class="field">
+            <label for="rateFrom">Ставка от, %</label>
+            <input type="number" id="rateFrom" value="15.5" min="0.1" step="0.1">
+        </div>
+        <div class="field">
+            <label for="rateTo">Ставка до, %</label>
+            <input type="number" id="rateTo" value="1.5" min="0.1" step="0.1">
+        </div>
+        <div class="field">
+            <label for="rateStep">Шаг ставки, %</label>
+            <input type="number" id="rateStep" value="2" min="0.1" step="0.1">
+        </div>
+    </div>
+
+    <button onclick="calculate()">Рассчитать</button>
+
+    <div id="results" class="results-section"></div>
+</div>
+
+<script>
+function fmt(n) {
+    return Math.round(n).toLocaleString('ru-RU');
+}
+
+function calcSimple(S, annualRate, months) {
+    const interest = Math.round(S * (annualRate / 100) * (months / 12));
+    return { interest, total: S + interest, overpay: interest };
+}
+
+function calcAnnuity(S, annualRate, n) {
+    const r = annualRate / 100 / 12;
+    if (r === 0) {
+        const payment = Math.round(S / n);
+        return { payment, total: payment * n, overpay: payment * n - S };
+    }
+    const pow = Math.pow(1 + r, n);
+    const payment = Math.round(S * (r * pow) / (pow - 1));
+    const total = payment * n;
+    return { payment, total, overpay: total - S };
+}
+
+function buildTable(headers, rows) {
+    let html = '<div class="table-wrap"><table><thead><tr>';
+    headers.forEach(h => html += `<th>${h}</th>`);
+    html += '</tr></thead><tbody>';
+    rows.forEach(row => {
+        html += '<tr>';
+        row.forEach(cell => html += `<td class="fmt">${cell}</td>`);
+        html += '</tr>';
+    });
+    html += '</tbody></table></div>';
+    return html;
+}
+
+function calculate() {
+    const S = parseFloat(document.getElementById('amount').value);
+    const months = parseInt(document.getElementById('months').value);
+    const from = parseFloat(document.getElementById('rateFrom').value);
+    const to = parseFloat(document.getElementById('rateTo').value);
+    const step = parseFloat(document.getElementById('rateStep').value);
+
+    if (!S || !months || isNaN(from) || isNaN(to) || !step) return;
+
+    const rates = [];
+    if (from >= to) {
+        for (let r = from; r >= to - 0.001; r -= step) rates.push(Math.round(r * 10) / 10);
+    } else {
+        for (let r = from; r <= to + 0.001; r += step) rates.push(Math.round(r * 10) / 10);
+    }
+
+    const simpleRows = [];
+    const annuityRows = [];
+
+    rates.forEach(rate => {
+        const s = calcSimple(S, rate, months);
+        simpleRows.push([
+            rate.toFixed(1) + '%',
+            fmt(s.interest) + ' ₽',
+            fmt(s.total) + ' ₽',
+            fmt(s.overpay) + ' ₽'
+        ]);
+
+        const a = calcAnnuity(S, rate, months);
+        annuityRows.push([
+            rate.toFixed(1) + '%',
+            fmt(a.payment) + ' ₽',
+            fmt(a.total) + ' ₽',
+            fmt(a.overpay) + ' ₽'
+        ]);
+    });
+
+    let html = `<h2>Возврат всей суммы в конце срока (простой процент)</h2>`;
+    html += `<p style="color:#666;font-size:0.88rem;margin-bottom:0.5rem">Сумма: ${fmt(S)} ₽, срок: ${months} мес.</p>`;
+    html += buildTable(['Ставка', 'Проценты', 'Всего к возврату', 'Переплата'], simpleRows);
+
+    html += `<h2>Ежемесячные аннуитетные платежи</h2>`;
+    html += `<p style="color:#666;font-size:0.88rem;margin-bottom:0.5rem">Сумма: ${fmt(S)} ₽, срок: ${months} мес.</p>`;
+    html += buildTable(['Ставка', 'Платёж/мес.', 'Всего выплат', 'Переплата'], annuityRows);
+
+    document.getElementById('results').innerHTML = html;
+}
+
+calculate();
+</script>
+</body>
+</html>
